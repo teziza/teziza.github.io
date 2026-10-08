@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malmen UF</title>
+<meta name="description" content="Malmen UF is a small team of student developers building cybersecurity tools, developer tools, and small games.">
+<style>
+  :root {
+    --ink: #0c0f1d;
+    --panel: #141933;
+    --line: #272e55;
+    --text: #e8eaf6;
+    --muted: #9aa1c4;
+    --pink: #ff5c8a;
+    --cyan: #5ce1ff;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(255, 92, 138, .16), transparent 60%),
+      radial-gradient(800px 500px at -10% 20%, rgba(92, 225, 255, .12), transparent 60%),
+      var(--ink);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 72px 22px 48px; }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(2.6rem, 9vw, 5.2rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0 0 18px;
+    font-weight: 700;
+  }
+  h1 .uf { color: var(--pink); }
+  .lede { font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--muted); max-width: 34em; margin: 0 0 40px; }
+
+  /* Terminal */
+  .term {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .7), 0 0 0 1px rgba(92, 225, 255, .05);
+    overflow: hidden;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font: 12px var(--mono);
+    color: var(--muted);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .dot:nth-child(1) { background: var(--pink); }
+  .dot:nth-child(2) { background: #ffd166; }
+  .dot:nth-child(3) { background: var(--cyan); }
+  .term-title { margin-left: 8px; }
+  .screen {
+    font: 14px/1.65 var(--mono);
+    padding: 16px 18px 8px;
+    height: 300px;
+    overflow-y: auto;
+  }
+  .screen p { margin: 0; white-space: pre-wrap; word-break: break-word; }
+  .screen .cmd { color: var(--text); }
+  .screen .out { color: var(--muted); }
+  .screen .ok { color: var(--cyan); }
+  .screen .err { color: var(--pink); }
+  .prompt { color: var(--pink); }
+  .inputrow { display: flex; gap: 8px; padding: 0 18px 14px; font: 14px var(--mono); align-items: center; }
+  .inputrow input {
+    flex: 1; min-width: 0;
+    background: transparent; border: 0; outline: 0;
+    color: var(--text); font: inherit; caret-color: var(--cyan);
+  }
+  .inputrow:focus-within { box-shadow: inset 0 -2px 0 var(--cyan); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px 16px; border-top: 1px solid var(--line); }
+  .chips button {
+    font: 13px var(--mono);
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+  .chips button:hover { border-color: var(--cyan); color: var(--cyan); }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+  /* What we build */
+  h2 { font-family: var(--mono); font-size: 1.1rem; font-weight: 600; margin: 72px 0 8px; color: var(--cyan); }
+  .rows { border-top: 1px solid var(--line); }
+  .row {
+    display: grid; grid-template-columns: 190px 1fr; gap: 8px 24px;
+    padding: 22px 0; border-bottom: 1px solid var(--line);
+  }
+  .row h3 { margin: 0; font: 600 1.05rem var(--mono); }
+  .row p { margin: 0; color: var(--muted); max-width: 38em; }
+  .row:nth-child(1) h3 { color: var(--pink); }
+  .row:nth-child(2) h3 { color: var(--cyan); }
+  .row:nth-child(3) h3 { color: #ffd166; }
+  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } .screen { height: 260px; } }
+
+  .contact p { color: var(--muted); margin: 0 0 6px; }
+  .contact a { font: 600 1.15rem var(--mono); color: var(--text); text-decoration-color: var(--pink); text-underline-offset: 5px; }
+  .contact a:hover { color: var(--pink); }
+
+  footer { margin-top: 72px; color: var(--muted); font: 13px var(--mono); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cursor { display: inline-block; width: 8px; height: 1em; background: var(--cyan); vertical-align: -2px; animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .cursor { display: none; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <h1>Malmen<span class="uf"> UF</span></h1>
+  <p class="lede">A small team of student developers building cybersecurity tools, developer tools, and small games.</p>
+
+  <section class="term" aria-label="Interactive terminal">
+    <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">malmen-uf: ~</span></div>
+    <div class="screen" id="screen" role="log" aria-live="polite"></div>
+    <label class="inputrow" for="cmd"><span class="prompt">$</span><input id="cmd" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type help"></label>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <h2>What we build</h2>
+  <div class="rows">
+    <div class="row"><h3>Security tools</h3><p>Defensive tools that help find and fix weak spots in our own code and systems.</p></div>
+    <div class="row"><h3>Developer tools</h3><p>Small utilities that remove repetitive steps from everyday development work.</p></div>
+    <div class="row"><h3>Games</h3><p>Small games, prototyped fast and polished later.</p></div>
+  </div>
+
+  <h2>Contact</h2>
+  <div class="contact">
+    <p>Questions or ideas? Send us an email.</p>
+    <a id="mail" href="mailto:your@email.com">your@email.com</a>
+  </div>
+
+  <footer>Malmen UF &middot; Student company &middot; Sweden</footer>
+</main>
+
+<script>
+(function () {
+  var screen = document.getElementById('screen');
+  var input = document.getElementById('cmd');
+  var chips = document.getElementById('chips');
+  var mail = document.getElementById('mail');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var COMMANDS = {
+    help: ['Available commands:', '  about      who we are', '  security   our security tools', '  devtools   our developer tools', '  games      our games', '  contact    how to reach us', '  clear      clean the screen'],
+    about: ['Malmen UF: a small team of student developers.', 'We build cybersecurity tools, developer tools, and small games.'],
+    security: ['Defensive tools for finding and fixing weak spots in our own code and systems.', 'Status: in progress.'],
+    devtools: ['Small utilities that remove repetitive steps from everyday development work.', 'Status: in progress.'],
+    games: ['Small games, prototyped fast and polished later.', 'Status: in progress.'],
+    contact: [function () { return 'Email: ' + mail.textContent; }]
+  };
+
+  function line(text, cls) {
+    var p = document.createElement('p');
+    p.className = cls || 'out';
+    p.textContent = text;
+    screen.appendChild(p);
+    screen.scrollTop = screen.scrollHeight;
+    return p;
+  }
+
+  function run(raw) {
+    var name = raw.trim().toLowerCase();
+    if (!name) return;
+    line('$ ' + name, 'cmd');
+    if (name === 'clear') { screen.textContent = ''; return; }
+    var res = COMMANDS[name];
+    if (!res) { line('command not found: ' + name + '. Type help to see commands.', 'err'); return; }
+    res.forEach(function (l) { line(typeof l === 'function' ? l() : l, name === 'about' ? 'ok' : 'out'); });
+  }
+
+  ['help', 'about', 'security', 'devtools', 'games', 'contact', 'clear'].forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = c;
+    b.addEventListener('click', function () { run(c); });
+    chips.appendChild(b);
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { run(input.value); input.value = ''; }
+  });
+
+  // Opening moment: the terminal types "about" by itself once.
+  function intro() {
+    if (reduce) { run('about'); line('Type help to see what else you can run.', 'out'); return; }
+    var typed = line('$ ', 'cmd');
+    var word = 'about', i = 0;
+    var t = setInterval(function () {
+      typed.textContent = '$ ' + word.slice(0, ++i);
+      if (i === word.length) {
+        clearInterval(t);
+        setTimeout(function () {
+          screen.removeChild(typed);
+          run('about');
+          line('Type help to see what else you can run.', 'out');
+        }, 350);
+      }
+    }, 110);
+  }
+  intro();
+})();
+</script>
+</body>
+</html>
