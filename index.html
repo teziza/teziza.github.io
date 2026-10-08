@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0e17">
+<title>Malmen UF | Security tools, developer tools, and small games</title>
+<meta name="description" content="Malmen UF is a small team of student developers in Sweden building cybersecurity tools, developer tools, and small games.">
+<style>
+  :root {
+    --bg: #0b0e17;
+    --surface: #121726;
+    --surface-2: #171d30;
+    --border: #232a42;
+    --border-hi: #36406a;
+    --text: #eef0f8;
+    --muted: #98a0bd;
+    --accent: #7aa2ff;
+    --accent-ink: #0b0e17;
+    --online: #4ade80;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; background: var(--bg); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; color: var(--text); font-family: var(--sans); line-height: 1.65;
+    background:
+      radial-gradient(1000px 520px at 78% -8%, rgba(122, 162, 255, .15), transparent 62%),
+      radial-gradient(700px 420px at 0% 30%, rgba(122, 162, 255, .06), transparent 60%),
+      var(--bg);
+  }
+  /* faint dot grid that fades out down the page */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(rgba(152, 160, 189, .16) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-mask-image: linear-gradient(#000, transparent 70%); mask-image: linear-gradient(#000, transparent 70%);
+  }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Header */
+  header.site { position: sticky; top: 0; z-index: 10; background: rgba(11, 14, 23, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: -.01em; }
+  .mark { width: 28px; height: 28px; border-radius: 7px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 14px var(--mono); }
+  nav.links { display: flex; align-items: center; gap: 26px; }
+  nav.links a { color: var(--muted); text-decoration: none; font-size: .95rem; }
+  nav.links a:hover { color: var(--text); }
+  nav.links a.btn { color: var(--accent-ink); }
+  @media (max-width: 720px) { nav.links a.hide-sm { display: none; } nav.links { gap: 14px; } }
+
+  .btn {
+    display: inline-block; text-decoration: none; font: 600 .95rem var(--sans); line-height: 1.3;
+    padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border); color: var(--text);
+    background: transparent; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { background: #95b4ff; border-color: #95b4ff; }
+
+  /* Status pill + dots */
+  .pill { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; background: rgba(18, 23, 38, .7); color: var(--muted); font-size: .88rem; margin-bottom: 26px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #5b637f; flex: none; }
+  .dot.on { background: var(--online); box-shadow: 0 0 0 0 rgba(74, 222, 128, .6); }
+  @media (prefers-reduced-motion: no-preference) {
+    .dot.on { animation: pulse 2s ease-out infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .55); } 70% { box-shadow: 0 0 0 9px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+    .caret { animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+  }
+
+  /* Hero */
+  .hero { padding: 80px 0 72px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
+  h1 { font-size: clamp(2.3rem, 5.2vw, 3.7rem); line-height: 1.06; letter-spacing: -.04em; margin: 0 0 20px; font-weight: 700; }
+  .hero p.lede { color: var(--muted); font-size: 1.15rem; max-width: 30em; margin: 0 0 32px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .meta { margin-top: 28px; color: var(--muted); font-size: .92rem; }
+
+  .window { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 30px 70px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(122,162,255,.04); overflow: hidden; }
+  .window-bar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--border); font: 12px var(--mono); color: var(--muted); }
+  .window-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--border-hi); display: block; }
+  .window-bar span { margin-left: 8px; }
+  .window pre { margin: 0; padding: 18px 20px 22px; font: 13.5px/1.7 var(--mono); color: var(--muted); }
+  .window pre b { color: var(--text); font-weight: 500; }
+  .window pre .p { color: var(--accent); }
+  @media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding: 52px 0 44px; gap: 40px; } }
+
+  /* Sections */
+  section.block { padding: 76px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); letter-spacing: -.028em; line-height: 1.2; margin: 0 0 12px; }
+  .intro { color: var(--muted); max-width: 38em; margin: 0 0 40px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  @media (max-width: 800px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,.025), transparent 40%), var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; transition: border-color .2s; }
+  .card:hover { border-color: var(--border-hi); }
+  .card h3 { margin: 18px 0 8px; font-size: 1.1rem; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); }
+  .icon { width: 42px; height: 42px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; color: var(--accent); }
+  .icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Project */
+  .project { background: linear-gradient(180deg, rgba(122,162,255,.05), transparent 45%), var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
+  .project h3 { margin: 0 0 10px; font-size: 1.35rem; letter-spacing: -.015em; }
+  .project > p { margin: 0 0 24px; color: var(--muted); max-width: 44em; }
+  dl.spec { display: grid; grid-template-columns: 170px 1fr; margin: 0 0 22px; border-top: 1px solid var(--border); }
+  dl.spec dt, dl.spec dd { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  dl.spec dt { color: var(--muted); }
+  dl.spec dd { font-family: var(--mono); font-size: .92rem; }
+  @media (max-width: 600px) { dl.spec { grid-template-columns: 1fr; } dl.spec dt { border-bottom: 0; padding-bottom: 0; } }
+  .note { color: var(--muted); font-size: .92rem; margin: 0 0 20px; }
+
+  details.code { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+  details.code summary { cursor: pointer; padding: 13px 16px; font-weight: 600; font-size: .95rem; }
+  .codebar { display: flex; justify-content: flex-end; padding: 0 12px 10px; }
+  .codebar button { font: 13px var(--sans); color: var(--text); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  .codebar button:hover { border-color: var(--accent); }
+  pre#code { margin: 0; padding: 16px; border-top: 1px solid var(--border); overflow-x: auto; max-height: 460px; font: 13px/1.55 var(--mono); color: var(--muted); }
+
+  /* Team */
+  .hours { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 0 0 32px; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; background: rgba(18, 23, 38, .6); color: var(--muted); font-size: .95rem; }
+  .hours b { color: var(--text); font-weight: 600; }
+  .hours .mono { font-family: var(--mono); color: var(--text); }
+  .dev-head { display: flex; align-items: center; gap: 16px; }
+  .avatar { position: relative; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #0f1118 0%, #cfd2db 50%, #ffffff 100%); border: 1px solid #3a3e4a; display: grid; place-items: center; flex: none; }
+  .avatar svg { width: 28px; height: 28px; fill: none; stroke: #0b0e17; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .dev-head h3.name-title { margin: 0; font: 700 1.7rem/1.15 var(--mono); letter-spacing: -.02em; }
+  .silver { display: inline-block; background: linear-gradient(100deg, #5b5f6b 0%, #ffffff 38%, #c7cbd5 62%, #7d818d 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+  .name .caret { width: 3px; height: 1.3rem; background: #dfe2ea; vertical-align: -3px; margin-left: 3px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .silver { animation: sheen 6s ease-in-out infinite alternate; }
+    @keyframes sheen { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+  }
+  .avatar .dot { position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border: 3px solid var(--surface); }
+  .dev-head h3 { margin: 0; font-size: 1.2rem; }
+  .dev-head .role { color: var(--accent); font-weight: 600; font-size: .92rem; margin: 2px 0 0; }
+  .typed { margin: 20px 0 4px !important; min-height: 3.3em; padding: 12px 14px; border-radius: 9px; background: var(--bg); border: 1px solid var(--border); font: 13.5px/1.6 var(--mono); color: var(--text) !important; }
+  .typed .prompt { color: var(--accent); }
+  .caret { display: inline-block; width: 7px; height: 1.05em; background: var(--accent); vertical-align: -3px; margin-left: 2px; }
+  dl.facts { display: grid; grid-template-columns: 110px 1fr; margin: 16px 0 0; }
+  dl.facts dt, dl.facts dd { margin: 0; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: .93rem; }
+  dl.facts dt { color: var(--muted); }
+  dl.facts dd.mono { font-family: var(--mono); font-size: .85rem; word-break: break-all; }
+  .status { display: inline-flex; align-items: center; gap: 8px; }
+  .dev-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .dev-actions .btn { padding: 8px 14px; font-size: .9rem; }
+
+  /* Contact */
+  .contact-card { background: linear-gradient(180deg, rgba(122,162,255,.07), transparent 60%), var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 40px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
+  .contact-card h2 { margin-bottom: 6px; }
+  .contact-card p { margin: 0; color: var(--muted); }
+  .mail { font: 600 1.05rem var(--mono); }
+
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: .9rem; }
+  footer .container { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container bar">
+    <a class="brand" href="#top"><span class="mark">M</span>Malmen UF</a>
+    <nav class="links" aria-label="Main">
+      <a class="hide-sm" href="#what-we-do">What we do</a>
+      <a class="hide-sm" href="#projects">Projects</a>
+      <a class="hide-sm" href="#team">Team</a>
+      <a class="btn primary" href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="container hero">
+    <div>
+      <div class="pill"><span class="dot" data-dot></span><span id="hero-status">Weekdays 08:00&ndash;15:00 (Sweden time)</span></div>
+      <h1>Security tools, developer tools, and small games.</h1>
+      <p class="lede">Malmen UF is a small team of student developers in Sweden. We build practical software and learn by shipping it.</p>
+      <div class="actions">
+        <a class="btn primary" href="#projects">See our projects</a>
+        <a class="btn" href="#team">Meet the team</a>
+      </div>
+      <p class="meta">Student company (Ung F&ouml;retagsamhet) &middot; Sweden</p>
+    </div>
+    <div class="window" aria-hidden="true">
+      <div class="window-bar"><i></i><i></i><i></i><span>encrypter.py</span></div>
+<pre><span class="p">$</span> <b>python encrypter.py</b>
+
+[1] Encrypt
+[2] Decrypt
+[3] Exit
+
+<span class="p">&gt;</span> <b>1</b>
+Enter your text:
+<span class="p">&gt;</span> <b>_</b></pre>
+    </div>
+  </div>
+
+  <section class="block" id="what-we-do">
+    <div class="container">
+      <h2>What we do</h2>
+      <p class="intro">Three areas we work in. Everything starts as a small prototype and grows from there.</p>
+      <div class="grid3">
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/></svg></div>
+          <h3>Security tools</h3>
+          <p>Defensive tools that help find and fix weak spots in our own code and systems.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7.5 10l3 2-3 2M13 15h4"/></svg></div>
+          <h3>Developer tools</h3>
+          <p>Small utilities that remove repetitive steps from everyday development work.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4.5"/><path d="M8 10.8v3.4M6.3 12.5h3.4M16 11.5h.01M18 13.5h.01"/></svg></div>
+          <h3>Games</h3>
+          <p>Small games, prototyped fast and polished later.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="projects">
+    <div class="container">
+      <h2>Projects</h2>
+      <p class="intro">What we have built so far.</p>
+      <div class="project">
+        <h3>Python encrypter</h3>
+        <p>A command-line tool that encrypts and decrypts text with a password. A wrong password or edited text is detected, and the tool says so instead of returning garbage.</p>
+        <dl class="spec">
+          <dt>Language</dt><dd>Python 3, standard library only</dd>
+          <dt>Key derivation</dt><dd>PBKDF2-SHA256, 200,000 rounds, random salt</dd>
+          <dt>Encryption</dt><dd>SHA-256 keystream, random nonce</dd>
+          <dt>Integrity</dt><dd>HMAC-SHA256 tag</dd>
+          <dt>Status</dt><dd>Learning project</dd>
+        </dl>
+        <p class="note">This is a custom design and has not been audited. Don't use it to protect anything important.</p>
+        <details class="code">
+          <summary>View the source code</summary>
+          <div class="codebar"><button type="button" id="copy">Copy code</button></div>
+          <pre id="code"></pre>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="team">
+    <div class="container">
+      <h2>The developers</h2>
+      <p class="intro">Two student developers based in Sweden.</p>
+
+      <div class="hours">
+        <span><b>Work hours</b> &nbsp;08: <span class="mono">08:00&ndash;15:00</span> &middot; Alecjus: <span class="mono">08:00&ndash;15:30</span> &middot; Mon&ndash;Fri</span>
+        <span><b>Sweden time now</b> &nbsp;<span class="mono" id="clock">--:--</span></span>
+      </div>
+
+      <div class="grid2">
+        <article class="card dev" data-start="08:00" data-end="15:00" data-lines="Senior Developer at Malmen UF.|Contributed to Zypha.">
+          <div class="dev-head">
+            <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01M7 13h7M7 16h4"/></svg><span class="dot" data-dot></span></div>
+            <div>
+              <h3 class="name-title"><span class="sr-only">08</span><span class="name" aria-hidden="true"><span class="name-target silver">08</span><span class="caret"></span></span></h3>
+              <p class="role">Main dev</p>
+            </div>
+          </div>
+          <p class="typed" aria-hidden="true"><span class="prompt">&gt;</span> <span class="type-target"></span><span class="caret"></span></p>
+          <p class="sr-only">Senior Developer at Malmen UF. Contributed to Zypha.</p>
+          <dl class="facts">
+            <dt>Status</dt><dd><span class="status"><span class="dot" data-dot></span><span data-status>Weekdays 08:00&ndash;15:00</span></span></dd>
+            <dt>Work hours</dt><dd>08:00&ndash;15:00, Mon&ndash;Fri</dd>
+            <dt>Location</dt><dd>Sweden</dd>
+            <dt>Discord ID</dt><dd class="mono">1458508976793845763</dd>
+          </dl>
+          <div class="dev-actions">
+            <a class="btn primary" href="https://discord.com/users/1458508976793845763" target="_blank" rel="noopener">Discord profile</a>
+            <button type="button" class="btn copy-id" data-id="1458508976793845763">Copy ID</button>
+          </div>
+        </article>
+
+        <article class="card dev" data-start="08:00" data-end="15:30" data-lines="Senior Scripter at Malmen UF.|Working on Cybercat.">
+          <div class="dev-head">
+            <div class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l-6 6 6 6"/><path d="M15 6l6 6-6 6"/></svg><span class="dot" data-dot></span></div>
+            <div>
+              <h3 class="name-title"><span class="sr-only">Alecjus</span><span class="name" aria-hidden="true"><span class="name-target silver">Alecjus</span><span class="caret"></span></span></h3>
+              <p class="role">Scripter</p>
+            </div>
+          </div>
+          <p class="typed" aria-hidden="true"><span class="prompt">&gt;</span> <span class="type-target"></span><span class="caret"></span></p>
+          <p class="sr-only">Senior Scripter at Malmen UF. Working on Cybercat.</p>
+          <dl class="facts">
+            <dt>Status</dt><dd><span class="status"><span class="dot" data-dot></span><span data-status>Weekdays 08:00&ndash;15:30</span></span></dd>
+            <dt>Work hours</dt><dd>08:00&ndash;15:30, Mon&ndash;Fri</dd>
+            <dt>Location</dt><dd>Sweden</dd>
+            <dt>Discord ID</dt><dd class="mono">1385232336165015595</dd>
+          </dl>
+          <div class="dev-actions">
+            <a class="btn primary" href="https://discord.com/users/1385232336165015595" target="_blank" rel="noopener">Discord profile</a>
+            <button type="button" class="btn copy-id" data-id="1385232336165015595">Copy ID</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="contact">
+    <div class="container">
+      <div class="contact-card">
+        <div>
+          <h2>Contact</h2>
+          <p>Questions, feedback, or ideas? Send us an email.</p>
+        </div>
+        <a class="btn primary mail" href="mailto:rustjermy21@gmail.com">rustjermy21@gmail.com</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <span>&copy; 2026 Malmen UF</span>
+    <span>Student company &middot; Sweden</span>
+  </div>
+</footer>
+
+<script type="text/plain" id="src">
+import base64
+import hashlib
+import os
+import getpass
+import hmac
+
+BANNER = r"""
+@@@@@@@@  @@@ @@@  @@@@@@@   @@@  @@@   @@@@@@
+@@@@@@@@  @@@ @@@  @@@@@@@@  @@@  @@@  @@@@@@@@
+     @@!  @@! !@@  @@!  @@@  @@!  @@@  @@!  @@@
+    !@!   !@! @!!  !!@  @!@  !@!  !@!  !!@  !@!
+   @!!     !@!@!   @!@@!@!   @!@!@!@!  @!@!@!@!
+  !!!       @!!!   !!@!!!    !!!@!!!!  !!!@!!!!
+ !!:        !!:    !!:       !!:  !!!  !!:  !!!
+:!:         :!:    :!:       :!:  !:!  :!:  !:!
+ :: ::::     ::     ::       ::   :::  ::   :::
+: :: : :     :      :         :   : :   :   : :
+"""
+
+def key(password, salt):
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode(),
+        salt,
+        200000,
+        32
+    )
+
+def stream(data, key, nonce):
+    result = bytearray()
+    counter = 0
+
+    while len(result) < len(data):
+        result.extend(
+            hashlib.sha256(
+                key +
+                nonce +
+                counter.to_bytes(8, "big")
+            ).digest()
+        )
+        counter += 1
+
+    return bytes(
+        a ^ b
+        for a, b in zip(data, result[:len(data)])
+    )
+
+def encrypt(text, password):
+    salt = os.urandom(16)
+    nonce = os.urandom(16)
+
+    k = key(password, salt)
+
+    data = text.encode("utf-8")
+    encrypted = stream(data, k, nonce)
+
+    tag = hmac.new(
+        k,
+        nonce + encrypted,
+        hashlib.sha256
+    ).digest()
+
+    return base64.b64encode(
+        salt + nonce + tag + encrypted
+    ).decode()
+
+def decrypt(data, password):
+    try:
+        raw = base64.b64decode(data)
+
+        salt = raw[:16]
+        nonce = raw[16:32]
+        tag = raw[32:64]
+        encrypted = raw[64:]
+
+        k = key(password, salt)
+
+        check = hmac.new(
+            k,
+            nonce + encrypted,
+            hashlib.sha256
+        ).digest()
+
+        if not hmac.compare_digest(tag, check):
+            return None
+
+        decrypted = stream(
+            encrypted,
+            k,
+            nonce
+        )
+
+        return decrypted.decode("utf-8")
+
+    except Exception:
+        return None
+
+def main():
+    print(BANNER)
+
+    while True:
+        print("[1] Encrypt")
+        print("[2] Decrypt")
+        print("[3] Exit")
+
+        choice = input("\n> ")
+
+        if choice == "1":
+            print("\nEnter your text:")
+            text = input("> ")
+
+            password = getpass.getpass(
+                "Choose a password: "
+            )
+
+            if not password:
+                print("Password cannot be empty.\n")
+                continue
+
+            result = encrypt(
+                text,
+                password
+            )
+
+            print("\nEncrypted:")
+            print(result)
+            print()
+
+        elif choice == "2":
+            print("\nPaste encrypted text:")
+            encrypted = input("> ")
+
+            password = getpass.getpass(
+                "Password: "
+            )
+
+            result = decrypt(
+                encrypted,
+                password
+            )
+
+            if result is None:
+                print("\nWrong password or invalid encrypted text.\n")
+            else:
+                print("\nDecrypted:")
+                print(result)
+                print()
+
+        elif choice == "3":
+            break
+
+        else:
+            print("Invalid choice.\n")
+
+if __name__ == "__main__":
+    main()
+</script>
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Source code viewer ---------- */
+  var code = document.getElementById('code');
+  var copy = document.getElementById('copy');
+  code.textContent = document.getElementById('src').textContent.replace(/^\n/, '');
+  function flash(btn, label) {
+    var old = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  }
+  copy.addEventListener('click', function () {
+    if (navigator.clipboard) navigator.clipboard.writeText(code.textContent).then(function () { flash(copy); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.copy-id'), function (b) {
+    b.addEventListener('click', function () {
+      if (navigator.clipboard) navigator.clipboard.writeText(b.getAttribute('data-id')).then(function () { flash(b); });
+    });
+  });
+
+  /* ---------- Work hours and live status (hours are set per developer in the HTML: data-start / data-end) ---------- */
+  var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function toMin(t) { var p = t.split(':'); return parseInt(p[0], 10) * 60 + parseInt(p[1], 10); }
+  function fmt(min) { return pad(Math.floor(min / 60)) + ':' + pad(min % 60); }
+
+  function swedenNow() {
+    var o = {};
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', weekday: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+    var h = parseInt(o.hour, 10), m = parseInt(o.minute, 10);
+    return { day: o.weekday.slice(0, 3), h: h, m: m, min: h * 60 + m };
+  }
+
+  function getStatus(n, cfg) {
+    var idx = WEEK.indexOf(n.day);
+    var workday = DAYS.indexOf(n.day) > -1;
+    if (workday && n.min >= cfg.start && n.min < cfg.end) return { on: true, text: 'Online now, until ' + fmt(cfg.end) };
+    var ahead = 0;
+    if (!(workday && n.min < cfg.start)) {
+      ahead = 1;
+      while (DAYS.indexOf(WEEK[(idx + ahead) % 7]) === -1) ahead++;
+    }
+    var when = ahead === 0 ? 'today' : ahead === 1 ? 'tomorrow' : WEEK[(idx + ahead) % 7];
+    return { on: false, text: 'Offline, back ' + when + ' at ' + fmt(cfg.start) };
+  }
+
+  var devCards = document.querySelectorAll('.dev');
+  var heroDot = document.querySelector('.pill [data-dot]');
+
+  function updateStatus() {
+    var n;
+    try { n = swedenNow(); } catch (e) { return; }
+    document.getElementById('clock').textContent = pad(n.h) + ':' + pad(n.m);
+    var anyOn = false, firstOff = '';
+    Array.prototype.forEach.call(devCards, function (card) {
+      var cfg = { start: toMin(card.getAttribute('data-start')), end: toMin(card.getAttribute('data-end')) };
+      var s = getStatus(n, cfg);
+      card.querySelector('[data-status]').textContent = s.text;
+      Array.prototype.forEach.call(card.querySelectorAll('[data-dot]'), function (d) { d.classList.toggle('on', s.on); });
+      if (s.on) anyOn = true; else if (!firstOff) firstOff = s.text.replace('Offline, ', '');
+    });
+    document.getElementById('hero-status').textContent = anyOn ? 'Team online now' : 'Team offline, ' + firstOff;
+    heroDot.classList.toggle('on', anyOn);
+  }
+  updateStatus();
+  setInterval(updateStatus, 30000);
+
+  /* ---------- Typewriter: bio lines type, erase and loop; the name does too ---------- */
+  function typer(el, lines) {
+    var li = 0, ci = 0, erasing = false;
+    (function tick() {
+      var line = lines[li];
+      if (!erasing) {
+        ci++;
+        el.textContent = line.slice(0, ci);
+        if (ci === line.length) { erasing = true; return setTimeout(tick, 2000); }
+        return setTimeout(tick, 45 + Math.random() * 40);
+      }
+      ci--;
+      el.textContent = line.slice(0, ci);
+      if (ci === 0) { erasing = false; li = (li + 1) % lines.length; return setTimeout(tick, 300); }
+      setTimeout(tick, 22);
+    })();
+  }
+
+  function nameLoop(el, name) {
+    var i = 0, erasing = false;
+    (function tick() {
+      if (!erasing) {
+        i++;
+        el.textContent = name.slice(0, i);
+        if (i === name.length) { erasing = true; return setTimeout(tick, 2400); }
+        return setTimeout(tick, 170);
+      }
+      i--;
+      el.textContent = name.slice(0, i);
+      if (i === 0) { erasing = false; return setTimeout(tick, 500); }
+      setTimeout(tick, 110);
+    })();
+  }
+
+  Array.prototype.forEach.call(devCards, function (card, i) {
+    var nameEl = card.querySelector('.name-target');
+    var nameCaret = card.querySelector('.name .caret');
+    var target = card.querySelector('.type-target');
+    var lines = card.getAttribute('data-lines').split('|');
+    var name = nameEl.textContent;
+    if (reduce || !('IntersectionObserver' in window)) {
+      target.textContent = lines[0];
+      if (nameCaret) nameCaret.style.display = 'none';
+      return;
+    }
+    nameEl.textContent = '';
+    var io = new IntersectionObserver(function (entries) {
+      if (!entries[0].isIntersecting) return;
+      io.disconnect();
+      setTimeout(function () { nameLoop(nameEl, name); typer(target, lines); }, i * 600);
+    }, { threshold: 0.4 });
+    io.observe(card);
+  });
+})();
+</script>
+</body>
+</html>
